@@ -220,6 +220,7 @@ const First = () => {
     return (
         <>
             <div>
+                <div>총 {data.length}개</div>
                 <select
                     className="my-2 rounded-[4px] border-[1px] py-1 pl-2 pr-9 text-sm"
                     value={table.getState().pagination.pageSize} // 현재 페이지 사이즈

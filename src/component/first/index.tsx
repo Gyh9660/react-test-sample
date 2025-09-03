@@ -141,7 +141,7 @@ const columns = [
         cell: info => (
             <span
                 style={{cursor: 'pointer', color: 'blue', textDecoration: 'underline'}}
-                onClick={() => console.log('age is', info.getValue())}
+                onClick={() => console.log('count is', info.getValue())}
             >
       {info.getValue()}
     </span>

@@ -9,27 +9,66 @@ import {
 import {type ChangeEvent, useEffect, useState} from "react";
 
 type Person = {
-    firstName: string;
-    lastName: string;
-    age: number;
+    no: number;
+    courseName: string;
+    trainingType: string;
+    channel: string;
+    institution: string;
+    enrolledCount: number;
+    completedCount: number;
+    registrationDate: string;
+    usedCardCount: number;
+    creator: string;
 };
 
-const firstNames = ['John', 'Jane', 'Chris', 'Mary', 'Robert', 'Linda', 'Michael', 'Jessica', 'David', 'Lisa'];
-const lastNames = ['Smith', 'Johnson', 'Williams', 'Jones', 'Brown', 'Davis', 'Miller', 'Wilson', 'Moore', 'Taylor'];
+const courses = ['리액트 기본', 'Vue 입문', 'Angular 실무', 'Node.js API', 'Python 머신러닝'];
+const trainingTypes = ['온라인', '오프라인', '하이브리드'];
+const channels = ['유튜브', '줌', '오프라인 강의실', '자체 플랫폼'];
+const institutions = ['한국교육원', '서울캠퍼스', '부산교육센터', '청주본부'];
+const creators = ['홍길동', '김철수', '박영희', '이순신'];
 
-function getRandomItem<T>(arr: T[]): T {
-    return arr[Math.floor(Math.random() * arr.length)];
-}
+const getRandomItem = <T,>(arr: T[]): T => arr[Math.floor(Math.random() * arr.length)];
 
-function getRandomAge(min = 18, max = 65): number {
+const getRandomInt = (min: number, max: number): number => {
     return Math.floor(Math.random() * (max - min + 1)) + min;
 }
 
-const data: Person[] = Array.from({length: 100}, () => ({
-    firstName: getRandomItem(firstNames),
-    lastName: getRandomItem(lastNames),
-    age: getRandomAge(),
+const getRandomDateTime = (start: Date, end: Date): string => {
+    const date = new Date(start.getTime() + Math.random() * (end.getTime() - start.getTime()));
+
+    const year = date.getFullYear();
+    const month = String(date.getMonth() + 1).padStart(2, '0');
+    const day = String(date.getDate()).padStart(2, '0');
+
+    const hours = String(date.getHours()).padStart(2, '0');
+    const minutes = String(date.getMinutes()).padStart(2, '0');
+    const seconds = String(date.getSeconds()).padStart(2, '0');
+
+    return `${year}.${month}.${day} ${hours}:${minutes}:${seconds}`;
+}
+
+const rawData = Array.from({ length: 100 }, () => ({
+    enrolledCount: getRandomInt(20, 100),
+    completedCount: 0, // 임시 0으로 초기화
+    courseName: getRandomItem(courses),
+    trainingType: getRandomItem(trainingTypes),
+    channel: getRandomItem(channels),
+    institution: getRandomItem(institutions),
+    registrationDate: getRandomDateTime(new Date(2022, 0, 1), new Date()),
+    usedCardCount: getRandomInt(0, 30),
+    creator: getRandomItem(creators),
 }));
+
+// 등록일자 최신순 정렬 (내림차순)
+rawData.sort((a, b) => (a.registrationDate > b.registrationDate ? 1 : -1));
+
+// no 부여 및 completedCount 재설정 예시
+const data: Person[] = rawData.map((item, index) => ({
+    no: index + 1,
+    ...item,
+    completedCount: getRandomInt(0, item.enrolledCount), // 이수인원 다시 무작위 생성
+}));
+
 
 const PAGE_SIZE_OPTIONS = [
     {
@@ -46,13 +85,11 @@ const PAGE_SIZE_OPTIONS = [
     },
 ];
 const SORT_OPTIONS = [
-    {id: '', label: '정렬 안함'}, // 기본값, 정렬 해제
-    {id: 'firstName_asc', label: 'First Name 오름차순'},
-    {id: 'firstName_desc', label: 'First Name 내림차순'},
-    {id: 'lastName_asc', label: 'Last Name 오름차순'},
-    {id: 'lastName_desc', label: 'Last Name 내림차순'},
-    {id: 'age_asc', label: 'Age 오름차순'},
-    {id: 'age_desc', label: 'Age 내림차순'},
+    {id: 'registrationDate_desc', label: '최근 등록순'},  // 기본값
+    {id: 'enrolledCount_desc', label: '학습인원 많은순'},
+    {id: 'enrolledCount_asc', label: '학습인원 적은순'},
+    {id: 'completedCount_desc', label: '이수인원 많은순'},
+    {id: 'completedCount_asc', label: '이수인원 적은순'},
 ];
 const columnHelper = createColumnHelper<Person>();
 
@@ -68,16 +105,28 @@ const columns = [
                    onChange={row.getToggleSelectedHandler()}/>
         )
     }),
-    columnHelper.accessor('firstName', {
-        header: 'First Name',
+    columnHelper.accessor('no', {
+        header: 'No',
         cell: info => info.getValue(),
     }),
-    columnHelper.accessor('lastName', {
-        header: 'Last Name',
+    columnHelper.accessor('courseName', {
+        header: '과정명',
         cell: info => info.getValue(),
     }),
-    columnHelper.accessor('age', {
-        header: 'Age',
+    columnHelper.accessor('trainingType', {
+        header: '교육형태',
+        cell: info => info.getValue(),
+    }),
+    columnHelper.accessor('channel', {
+        header: 'Channel',
+        cell: info => info.getValue(),
+    }),
+    columnHelper.accessor('institution', {
+        header: '교육기관',
+        cell: info => info.getValue(),
+    }),
+    columnHelper.accessor('enrolledCount', {
+        header: '학습인원',
         cell: info => (
             <span
                 style={{cursor: 'pointer', color: 'blue', textDecoration: 'underline'}}
@@ -87,9 +136,32 @@ const columns = [
     </span>
         ),
     }),
-    columnHelper.accessor(data => data.firstName + "_" + data.lastName, {
-        header: 'Full Name',
-        id: "fullName",
+    columnHelper.accessor('completedCount', {
+        header: '이수인원',
+        cell: info => (
+            <span
+                style={{cursor: 'pointer', color: 'blue', textDecoration: 'underline'}}
+                onClick={() => console.log('age is', info.getValue())}
+            >
+      {info.getValue()}
+    </span>
+        ),
+    }),
+    columnHelper.accessor('registrationDate', {
+        header: '등록일자',
+        cell: info => info.getValue(),
+    }),
+    columnHelper.accessor('usedCardCount', {
+        header: '사용 카드 수',
+        cell: info => info.getValue(),
+    }),
+    columnHelper.accessor('creator', {
+        header: '생성자',
+        cell: info => info.getValue(),
+    }),
+    columnHelper.accessor(data => data.channel + "_" + data.institution, {
+        header: '테스트',
+        id: "test",
         cell: info => info.getValue(),
     }),
     columnHelper.display({
@@ -111,7 +183,9 @@ const columns = [
 const First = () => {
 
     const [rowSelection, setRowSelection] = useState({});
-    const [sorting, setSorting] = useState<SortingState>([]);
+    const [sorting, setSorting] = useState<SortingState>([
+        {id: 'registrationDate', desc: true}
+    ]);
     useEffect(() => {
         console.log(rowSelection)
     }, [rowSelection]);
@@ -134,18 +208,13 @@ const First = () => {
         },
         getSortedRowModel: getSortedRowModel(),
     });
-    const [sortColumn, setSortColumn] = useState('');
+    const [sortColumn, setSortColumn] = useState('registrationDate_desc');
     const handleSortColumnChange = (e: ChangeEvent<HTMLSelectElement>) => {
         setSortColumn(e.target.value);
+        // 예: "firstName_asc" → id: "firstName", desc: false
+        const [id, direction] = e.target.value.split('_');
+        setSorting([{id, desc: direction === 'desc'}]);
 
-        if (e.target.value === '') {
-            // 정렬 해제: 빈 배열로 초기화
-            setSorting([]);
-        } else {
-            // 예: "firstName_asc" → id: "firstName", desc: false
-            const [id, direction] = e.target.value.split('_');
-            setSorting([{ id, desc: direction === 'desc' }]);
-        }
     };
 
     return (

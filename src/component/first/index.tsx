@@ -7,6 +7,7 @@ import {
     useReactTable,
 } from '@tanstack/react-table';
 import {type ChangeEvent, useEffect, useState} from "react";
+import Search from "../search";
 
 type Person = {
     no: number;
@@ -27,7 +28,7 @@ const channels = ['유튜브', '줌', '오프라인 강의실', '자체 플랫�
 const institutions = ['한국교육원', '서울캠퍼스', '부산교육센터', '청주본부'];
 const creators = ['홍길동', '김철수', '박영희', '이순신'];
 
-const getRandomItem = <T,>(arr: T[]): T => arr[Math.floor(Math.random() * arr.length)];
+const getRandomItem = <T, >(arr: T[]): T => arr[Math.floor(Math.random() * arr.length)];
 
 const getRandomInt = (min: number, max: number): number => {
     return Math.floor(Math.random() * (max - min + 1)) + min;
@@ -47,7 +48,7 @@ const getRandomDateTime = (start: Date, end: Date): string => {
     return `${year}.${month}.${day} ${hours}:${minutes}:${seconds}`;
 }
 
-const rawData = Array.from({ length: 100 }, () => ({
+const rawData = Array.from({length: 100}, () => ({
     enrolledCount: getRandomInt(20, 100),
     completedCount: 0, // 임시 0으로 초기화
     courseName: getRandomItem(courses),
@@ -186,11 +187,13 @@ const First = () => {
     const [sorting, setSorting] = useState<SortingState>([
         {id: 'registrationDate', desc: true}
     ]);
+    const [filteredData, setFilteredData] = useState<Person[]>(data);
+
     useEffect(() => {
         console.log(rowSelection)
     }, [rowSelection]);
     const table = useReactTable({
-        data,
+        data: filteredData,
         columns,
         getCoreRowModel: getCoreRowModel(),
         onRowSelectionChange: setRowSelection,
@@ -217,8 +220,24 @@ const First = () => {
 
     };
 
+    const handleSearch = (searchKeyword: string) => {
+        console.log(searchKeyword);
+        console.log(data, "data")
+        if (searchKeyword.trim() === '') {
+            setFilteredData(data);
+        } else {
+            const newFilteredList = filteredData.filter(item =>
+                item.creator.toLowerCase().includes(searchKeyword.toLowerCase())
+            );
+            setFilteredData(newFilteredList);
+        }
+
+    }
     return (
         <>
+            <div>
+                <Search clickSearch={handleSearch}/>
+            </div>
             <div>
                 <div>총 {data.length}개</div>
                 <select
